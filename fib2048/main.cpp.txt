@@ -1,0 +1,500 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <conio.h>
+#include <Windows.h>
+#include <string.h>
+int board[15][15] = {0};
+int winValue=0,r=2,c=2,changesMade=0,sc=0;
+char ch;
+struct user
+{
+	char name[100];
+	int moves;
+	char board[100];
+	int state;
+	int b[10][10];
+	int row;
+};
+struct user *leaderboard = (struct user*)malloc(sizeof(struct user) * 1000);
+int nthFibo(int n) {
+	int a = 1, b = 1;
+	if (n == 1 || n == 2) {
+		return 1;
+	}
+	else {
+		a = 1;
+		b = 2;
+		int i = 3;
+		while (i < n) {
+			int temp = b;
+			b = a + b;
+			a = temp;
+			i++;
+		}
+		return a;
+	}
+}
+void calcWinVal() {
+	winValue = nthFibo(2 * r * c);
+}
+void display()
+{
+	system("cls");
+	printf("\t\t\t2048 game by P Bhaskar Nihaal\n\n\n\n\n\n");
+	printf("\t\tmoves=%d\t\t\t\tsave-'q'\n\n\n",sc++);
+	//sc=sc+
+	for (int i = 0; i < r; i++)
+	{
+		printf("\t\t    |");
+		for (int j = 0; j < c; j++)
+		{
+			if (board[i][j])
+				printf("%4d    |", board[i][j]);
+			else
+				printf("%4c    |",' ');
+		}
+		printf("\n\n");
+	}
+	//printf("\n\n\n\t\t\t\t\t\t\t\t\tQuit-'q'   Help-'h'   Undo-'u'   Restart-'r'   ");
+
+}
+
+void insert() {
+	srand(time(NULL));
+	int x, y, count = 0, val = r*c, hash[10][10] = {0};
+	do {
+		x = rand() % r;
+		y = rand() % c;
+		++count;
+		if (count > val)
+			return;
+	} while (board[x][y] != 0&&!hash[x][y]);
+	board[x][y] = 1;
+}
+
+void initialize() {
+	for (int i = 0; i < r; i++) {
+		for (int j = 0; j < c; j++) {
+			board[i][j] = 0;
+		}
+	}
+	insert();
+	insert();
+}
+
+void moveLeft() {
+	for (int i = 0; i < r; i++) {
+		int j = 0, k = 0;
+		while (j < c) {
+			if (board[i][j] == 0) {
+				k = j + 1;
+				int found = 0;
+				while (k < c) {
+					if (board[i][k] != 0) {
+						found = 1;
+						break;
+					}
+					k++;
+				}
+				if (found) {
+					changesMade++;
+					board[i][j] = board[i][k];
+					board[i][k] = 0;
+				}
+			}
+			j++;
+		}
+	}
+}
+
+void moveRight() {
+	for (int i = 0; i < r; i++) {
+		int j = c - 1, k = c - 1;
+		while (j >= 0) {
+			if (board[i][j] == 0) {
+				k = j - 1;
+				int found = 0;
+				while (k >= 0) {
+					if (board[i][k] != 0) {
+						found = 1;
+						break;
+					}
+					k--;
+				}
+				if (found) {
+					changesMade++;
+					board[i][j] = board[i][k];
+					board[i][k] = 0;
+				}
+			}
+			j--;
+		}
+	}
+}
+
+void moveUp() {
+	for (int j = 0; j < c; j++) {
+		int i = 0, k = 0;
+		while (i < r) {
+			if (board[i][j] == 0) {
+				int found = 0;
+				k = i + 1;
+				while (k < r) {
+					if (board[k][j] != 0) {
+						found = 1;
+						break;
+					}
+					k++;
+				}
+				if (found) {
+					changesMade++;
+					board[i][j] = board[k][j];
+					board[k][j] = 0;
+				}
+			}
+			i++;
+		}
+	}
+}
+
+void moveDown() {
+	for (int j = 0; j < c; j++) {
+		int i = r - 1, k = r - 1;
+		while (i >= 0) {
+			if (board[i][j] == 0) {
+				int found = 0;
+				k = i - 1;
+				while (k >= 0) {
+					if (board[k][j] != 0) {
+						found = 1;
+						break;
+					}
+					k--;
+				}
+				if (found) {
+					changesMade++;
+					board[i][j] = board[k][j];
+					board[k][j] = 0;
+				}
+			}
+			i--;
+		}
+	}
+}
+
+int isFiboPair(int n1, int n2) {
+	if (n1 > n2) {
+		int temp = n1;
+		n1 = n2;
+		n2 = temp;
+	}
+	int a = 1, b = 1, found = 0;
+	do {
+		if (a == n1 && b == n2) {
+			found = 1;
+			break;
+		}
+		else if (a > n1) {
+			break;
+		}
+		int temp = b;
+		b = a + b;
+		a = temp;
+	} while (1);
+	if (found) {
+		changesMade = 1;
+	}
+	return found;
+}
+
+void mergeLeft() {
+	for (int i = 0; i < r; i++) {
+		for (int j = 0; j < c - 1; j++) {
+			if (isFiboPair(board[i][j], board[i][j + 1])) {
+				board[i][j] += board[i][j + 1];
+				board[i][j + 1] = 0;
+				j++;
+			}
+		}
+	}
+}
+
+void mergeRight() {
+	for (int i = 0; i < r; i++) {
+		for (int j = c - 1; j >= 1; j--) {
+			if (isFiboPair(board[i][j], board[i][j - 1])) {
+				board[i][j] += board[i][j - 1];
+				board[i][j - 1] = 0;
+				j--;
+			}
+		}
+	}
+}
+
+void mergeUp() {
+	for (int j = 0; j < c; j++) {
+		for (int i = 0; i < r - 1; i++) {
+			if (isFiboPair(board[i][j], board[i + 1][j])) {
+				board[i][j] += board[i + 1][j];
+				board[i + 1][j] = 0;
+				i++;
+			}
+		}
+	}
+}
+
+void mergeDown() {
+	for (int j = 0; j < c; j++) {
+		for (int i = r - 1; i >= 1; i--) {
+			if (isFiboPair(board[i][j], board[i - 1][j])) {
+				board[i][j] += board[i - 1][j];
+				board[i - 1][j] = 0;
+				i--;
+			}
+		}
+	}
+}
+int move(char dir)
+{
+	changesMade = 0;
+	switch (dir)
+	{
+		case -1:
+			return -1;
+			break;
+
+		case 'w':
+			moveUp();
+			mergeUp();
+			moveUp();
+			break;
+
+		case 'd':
+			moveRight();
+			mergeRight();
+			moveRight();
+			break;
+
+		case 's':
+			moveDown();
+			mergeDown();
+			moveDown();
+			break;
+
+		case 'a':
+			moveLeft();
+			mergeLeft();
+			moveLeft();
+			break;
+	}
+	return changesMade;
+}
+
+int isGameOver() {
+	for (int i = 0; i < r; i++) {
+		for (int j = 0; j < c - 1; j++) {
+			if (isFiboPair(board[i][j], board[i][j + 1]) || board[i][j] == 0 || board[i][j + 1] == 0 || isFiboPair(board[i][j+1], board[i][j])) {
+				return 0;
+			}
+		}
+	}
+	for (int j = 0; j < c; j++) {
+		for (int i = 0; i < r - 1; i++) {
+			if (isFiboPair(board[i][j], board[i + 1][j])||isFiboPair(board[i+1][j],board[i][j])) {
+				return 0;
+			}
+		}
+	}
+	return 1;
+}
+
+int gameWon() {
+	for (int i = 0; i < r; i++) {
+		for (int j = 0; j < c; j++) {
+			if (board[i][j] == winValue || board[i][j + 1] == winValue) {
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+void sort(int n)
+{
+	for (int i = 0; i < n - 1; i++)
+	{
+		for (int j = i + 1; j < n; j++)
+		{
+			if (leaderboard[i].moves>leaderboard[j].moves)
+			{
+				struct user temp;
+				temp = leaderboard[i];
+				leaderboard[i] = leaderboard[j];
+				leaderboard[j] = temp;
+			}
+		}
+	}
+}
+void newgame()
+{
+	system("cls");
+	struct user temp;
+	fflush(stdin);
+	printf("\nenter your name\n");
+	gets_s(temp.name);
+	system("cls");
+	fflush(stdin);
+	printf("select the type of the board");
+	printf("\n\t\t1:2x2\n\t\t2:4x4\n");
+	int choice;
+	//choice = _getch();
+	scanf_s("%d", &choice);
+	if (choice == 2){ r = c = 4; temp.board[0] = '4'; temp.board[1] = 'x'; temp.board[2] = '4'; temp.board[3] = '\0'; }
+	else{
+		temp.board[0] = '2'; temp.board[1] = 'x'; temp.board[2] = '2'; temp.board[3] = '\0';
+	}
+	system("cls");
+	initialize();
+	calcWinVal();
+	while (1)
+	{
+		display();
+		fflush(stdin);
+		//scanf_s("%c",&ch);
+		ch = _getch();
+		if (ch == 'q')
+		{
+			temp.moves = sc;
+			temp.state = -1;
+			temp.row = r;
+			for (int i = 0; i < r; i++)
+			{
+				for (int j = 0; j < c; j++)
+				{
+					temp.b[i][j] = board[i][j];
+				}
+			}
+			FILE *fp;
+			fp = fopen("saved.dat", "a");
+			fwrite(&temp, sizeof(struct user), 1, fp);
+			fclose(fp);
+			printf("Game Saved Successfully");
+			break;
+
+		}
+		else
+			move(ch);
+		insert();
+		if (gameWon())
+		{
+			display();
+			printf("player won the game in %d moves", sc);
+			temp.moves = sc;
+			FILE *fp;
+			fp = fopen("input.dat", "a");
+			fwrite(&temp, sizeof(struct user), 1, fp); fclose(fp);
+			break;
+		}
+		if (isGameOver())
+		{
+			display();
+			printf("player lose the game in %d moves", sc); break;
+		}
+	}
+	_getch();
+}
+void leadb()
+{
+	int count = 0, i = 0;
+	system("cls");
+	FILE *fp;
+	struct user temp;
+	fp = fopen("input.dat", "r");
+	while (fread(&temp, sizeof(struct user), 1, fp))
+	{
+		leaderboard[i] = temp; i++;
+	}
+	sort(i);
+	printf("\t\t\t\t\t-LEADERBOARD-\n\n\n");
+	for (int j = 0; j < i; j++)
+	{
+		printf("\t\t\t%d\t%s\t%s\t%d\n", ++count, leaderboard[j].name, leaderboard[j].board, leaderboard[j].moves);
+	}
+	fclose(fp);
+	_getch();
+}
+void savedgame()
+{
+	system("cls");
+	char name[100];
+	printf("enter your name:");
+	fflush(stdin);
+	scanf("%s", &name);
+	FILE *fp;
+	struct user temp, temp2;
+	fp = fopen("saved.dat", "r+");
+	while (fread(&temp, sizeof(struct user), 1, fp))
+	{
+		//printf("%d %s\n",temp.state,temp.name);
+		if (temp.state == -1 && !strcmp(temp.name, name))
+		{
+			temp2 = temp;
+		}
+	}
+	fclose(fp);
+	for (int i = 0; i < r; i++)
+	{
+		for (int j = 0; j < c; j++)
+		{
+			board[i][j] = temp2.b[i][j];
+		}
+	}
+	r = c = temp2.row;
+	sc = temp2.moves;
+	calcWinVal();
+	while (1)
+	{
+		display(); fflush(stdin);
+		ch = _getch();
+		move(ch);
+		insert();
+		if (gameWon())
+		{
+			display();
+			printf("player won the game in %d moves", sc);
+			temp2.moves = sc;
+			temp2.state = 0;
+			fp = fopen("input.dat", "a");
+			fwrite(&temp2, sizeof(struct user), 1, fp);
+			fclose(fp);
+			break;
+		}
+		if (isGameOver())
+		{
+			display();
+			printf("player lose the game in %d moves", sc); break;
+		}
+	}
+	_getch();
+}
+void main()
+{
+	while (1)
+	{
+		system("cls");
+		printf("please select one of the following\n\t\t1:New Game\n\t\t2:Leader Board\n\t\t3:Saved Game\n\t\t4:exit\n");
+		int choice1;
+		scanf_s("%d", &choice1);
+	
+				if (choice1 == 1)
+					newgame();
+				else if (choice1==2)
+					leadb();
+				else if (choice1==3)
+					savedgame();
+				else 
+					break;
+		}
+	//_getch(); _getch();
+}
